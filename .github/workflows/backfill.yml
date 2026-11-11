@@ -1,0 +1,57 @@
+name: Historiek inladen
+
+# Eenmalig (of na een fout): alle maandbestanden sinds 2014 verwerken.
+# Draai het in blokken van een paar jaar; een job mag maximaal 6 uur duren.
+# Maanden die al verwerkt zijn worden overgeslagen, dus opnieuw starten kan altijd.
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Vanaf maand (YYYY-MM)"
+        default: "2014-01"
+      until:
+        description: "Tot en met maand (YYYY-MM)"
+        default: "2017-12"
+      force:
+        description: "Ook maanden die al bestaan opnieuw verwerken"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+      STIPT_STORAGE: github
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Maandbestanden verwerken
+        run: |
+          python -m stipt ingest-monthly \
+            --since "${{ inputs.since }}" --until "${{ inputs.until }}" \
+            ${{ inputs.force && '--force' || '' }}
+      - name: Maandcijfers bewaren
+        if: always()
+        run: |
+          [ -f history/national.json ] || exit 0
+          git config user.name "stipt-bot"
+          git config user.email "stipt-bot@users.noreply.github.com"
+          git pull --rebase
+          git add history/national.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Historiek ${{ inputs.since }} – ${{ inputs.until }}"
+            git push
+          fi

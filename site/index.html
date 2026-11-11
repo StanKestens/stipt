@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stipt</title>
+<style>
+body { margin: 0; background: #141311; color: #EFEADF; font: 16px/1.6 "Courier New", monospace; }
+main { max-width: 760px; margin: 0 auto; padding: 64px 24px; }
+a { color: #FFB21A; }
+pre { background: #1F1E1C; padding: 16px; overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+<h1>Stipt</h1>
+<p>De website komt hier. Tot dan: de pipeline draait en de data staat klaar.</p>
+<ul>
+<li><a href="data/meta.json">data/meta.json</a> wanneer bijgewerkt</li>
+<li><a href="data/national.json">data/national.json</a> heel het net per maand</li>
+<li><a href="data/ranking.json">data/ranking.json</a> minst stipte treinen</li>
+<li><a href="data/stations/index.json">data/stations/index.json</a> alle stations</li>
+</ul>
+<pre id="meta">laden…</pre>
+</main>
+<script>
+fetch("data/meta.json").then(r => r.json()).then(m => {
+  document.getElementById("meta").textContent = JSON.stringify(m, null, 2);
+}).catch(() => { document.getElementById("meta").textContent = "nog geen data"; });
+</script>
+</body>
+</html>
